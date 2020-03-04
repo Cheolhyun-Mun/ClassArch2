@@ -5,5 +5,5 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from . import pointnet2_utils
-from . import pointnet2_modules
+from .pytorch_utils import *
+from .viz import *
