@@ -1,13 +1,15 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-import pointnet2_utils
-import pytorch_utils as pt_utils
 from typing import List
 import numpy as np
 import time
 import math
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from ClassArch2.utils import pointnet2_utils
+import etw_pytorch_utils as pt_utils
+
 
 class _PointnetSAModuleBase(nn.Module):
 

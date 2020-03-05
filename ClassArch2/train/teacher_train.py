@@ -21,10 +21,10 @@ import pprint
 import os.path as osp
 import argparse
 
-from models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
-from models.rscnn_ssn_cls import model_fn_decorator
-from data.ModelNet40Loader import ModelNet40
-import data.data_utils as d_utils
+from ClassArch2.models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
+from ClassArch2.models.rscnn_ssn_cls import model_fn_decorator
+from ClassArch2.data.ModelNet40Loader import ModelNet40
+import ClassArch2.data.data_utils as d_utils
 # from RandAugment3D.augmentation import RandAugment3D
 
 torch.backends.cudnn.enabled = True
@@ -83,6 +83,7 @@ if __name__ == "__main__":
     transforms = transforms.Compose(
         [
             d_utils.PointcloudToTensor(),
+            RandAugment3D(1, 1),
         ]
     )
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
         pin_memory=True,
     )
 
-    train_set = ModelNet40(args.num_points, transforms=transforms)
+    train_set = ModelNet40(args.num_points, transforms=transforms, split='train')
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,

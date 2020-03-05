@@ -13,7 +13,7 @@ import h5py
 import subprocess
 import shlex
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = './'
 
 
 def _get_data_files(list_filename):
@@ -40,15 +40,19 @@ class ModelNet40(data.Dataset):
 
         if download and not os.path.exists(self.data_dir):
             zipfile = os.path.join(BASE_DIR, os.path.basename(self.url))
-            subprocess.check_call(
-                shlex.split("curl {} -o {}".format(self.url, zipfile))
-            )
+            # subprocess.check_call(
+            #     shlex.split("wget {} -o {}".format(self.url, zipfile))
+            # )
 
-            subprocess.check_call(
-                shlex.split("unzip {} -d {}".format(zipfile, BASE_DIR))
-            )
+            # subprocess.check_call(
+            #     shlex.split("unzip {} -d {}".format(zipfile, BASE_DIR))
+            # )
 
-            subprocess.check_call(shlex.split("rm {}".format(zipfile)))
+            # subprocess.check_call(shlex.split("rm {}".format(zipfile)))
+            os.system('wget https://shapenet.cs.stanford.edu/media/modelnet40_ply_hdf5_2048.zip')
+            print("DATA DOWNLOADED")
+            os.system('unzip modelnet40_ply_hdf5_2048.zip')
+            print("DATA UNZIPPED")
 
         self.split = split
         if self.split == 'train':
