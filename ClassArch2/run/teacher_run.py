@@ -2,7 +2,7 @@ import os
 import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, "../"))
+sys.path.append(os.path.join(BASE_DIR, "../../"))
 from shutil import copyfile
 import h5py
 import numpy as np
@@ -13,10 +13,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import transforms
 
-from models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
-from models.rscnn_ssn_cls import model_fn_decorator
-from data.ModelNet40Loader import UnlabeledModelNet40
-import data.data_utils as d_utils
+from ClassArch2.models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
+from ClassArch2.models.rscnn_ssn_cls import model_fn_decorator
+from ClassArch2.data.ModelNet40Loader import UnlabeledModelNet40
+import ClassArch2.data.data_utils as d_utils
 
 
 torch.backends.cudnn.enabled = True
@@ -37,31 +37,37 @@ if __name__ == '__main__':
     target_folder = './data/'
 
     ds_test = UnlabeledModelNet40(1024, '../data/', test_transforms, split='unlabeled')
-
-    # model_loc = './PointNet/final'
+   
     model_loc = '../train/checkpoints/rscnn_cls_best'
-    model = torch.load(model_loc + '.pt')
+    checkpoints = torch.load(model_loc + '.pth.tar')
+    model = RSCNN(input_channels=0, num_classes=40, use_xyz=True)
+    model.load_state_dict(checkpoints['model_state'])
     model = model.cuda()
     model.eval()
 
     label = []
+    length = ds_test.__len__()
 
-    for i in range(2048):
+    for i in range(length):
         X = ds_test.__getitem__(i)
-        X = X.view(1, 3, 2048).cuda()
-        pred, _, _ = model(X)
+        X = X.contiguous().unsqueeze(0).cuda()
+        pred = model(X)
         label.append(int((pred == pred.max()).nonzero().flatten()[-1]))
-
+       
     label = np.array(label)
     label = np.expand_dims(label, axis=1)
     label = label.astype(np.uint8)
     print('LABELING DONE...')
     print('MAKING INTO HDF FILE...')
 
-    f = h5py.File('../data/modelnet40_ply_hdf5_2048/ply_data_unlabeled0.h5')
-    data  = f['data'][:]
-    print(f.keys())
+    f1 = h5py.File('../data/modelnet40_ply_hdf5_2048/ply_data_unlabeled0.h5')
+    data  = f1['data'][:]
+    print(f1.keys())
     
+    f2 = h5py.File('../data/modelnet40_ply_hdf5_2048/ply_data_unlabeled1.h5')
+    data  = data.append(f2['data'][:])
+    print(f2.keys())
+
     final_label = h5py.File('data/modelnet40_ply_hdf5_2048/ply_data_labeled0.h5', 'w')
     print(final_label)
     final_label['data'] = data

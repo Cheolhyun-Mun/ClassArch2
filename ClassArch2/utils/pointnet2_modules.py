@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ClassArch2.utils import pointnet2_utils
-import etw_pytorch_utils as pt_utils
+import ClassArch2.utils.pointnet2_utils as pointnet2_utils
+import ClassArch2.utils.pytorch_utils as pt_utils
 
 
 class _PointnetSAModuleBase(nn.Module):

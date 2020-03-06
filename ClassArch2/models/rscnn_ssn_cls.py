@@ -1,12 +1,12 @@
 import os, sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, "../utils"))
+sys.path.append(os.path.join(BASE_DIR, "../../"))
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import pytorch_utils as pt_utils
-from pointnet2_modules import PointnetSAModule, PointnetSAModuleMSG
+import ClassArch2.utils.pytorch_utils as pt_utils
+from ClassArch2.utils.pointnet2_modules import PointnetSAModule, PointnetSAModuleMSG
 import numpy as np
 from collections import namedtuple
 
@@ -122,8 +122,3 @@ if __name__ == "__main__":
     sim_data = sim_data.cuda()
     sim_cls = Variable(torch.ones(32, 16))
     sim_cls = sim_cls.cuda()
-
-    seg = RSCNN_SSN(num_classes=50, input_channels=3, use_xyz=True)
-    seg = seg.cuda()
-    out = seg(sim_data, sim_cls)
-    print('seg', out.size())

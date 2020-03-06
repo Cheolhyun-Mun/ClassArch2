@@ -13,7 +13,7 @@ import h5py
 import subprocess
 import shlex
 
-BASE_DIR = './'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def _get_data_files(list_filename):
@@ -107,23 +107,20 @@ class UnlabeledModelNet40(data.Dataset):
 
         point_list = []
         for f in self.files:
-            points, _ = _load_data_file(os.path.join(root, self.files[-1]))
+            points, _ = _load_data_file(os.path.join(BASE_DIR, f))
             point_list.append(points)
 
         self.points = np.concatenate(point_list, 0)
 
     def __getitem__(self, idx):
-        pt_idxs = np.arange(0, self.points.shape[1])
+        pt_idxs = np.arange(0, min(self.points.shape[1], self.num_points))
         
         current_points = self.points[idx, pt_idxs].copy()
         
         if self.transforms is not None:
             current_points = self.transforms(current_points)
-        
-        current_points = torch.transpose(current_points, 1, 0)
-        
+
         return current_points
 
     def __len__(self):
         return self.points.shape[0]
-

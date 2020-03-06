@@ -8,24 +8,24 @@ from __future__ import (
 import os, sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, "../"))
+sys.path.append(os.path.join(BASE_DIR, "../../"))
 import torch
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_sched
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from utils import pytorch_utils as pt_utils
-from utils import viz as v
+from ClassArch2.utils import pytorch_utils as pt_utils
+from ClassArch2.utils import viz as v
 import pprint
 import os.path as osp
 import argparse
 
-from models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
-from models.rscnn_ssn_cls import model_fn_decorator
-from data.ModelNet40Loader import ModelNet40
-import data.data_utils as d_utils
-from RandAugment3D.augmentation import RandAugment3D
+from ClassArch2.models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
+from ClassArch2.models.rscnn_ssn_cls import model_fn_decorator
+from ClassArch2.data.ModelNet40Loader import ModelNet40
+import ClassArch2.data.data_utils as d_utils
+# from RandAugment3D.augmentation import RandAugment3D
 
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = True
@@ -68,8 +68,8 @@ def parse_args():
         default="cls_run_1",
         help="Name for run in tensorboard_logger",
     )
-    parser.add_argument("--visdom-port", type=int, default=8097)
-    parser.add_argument("--visdom", action="store_true")
+    parser.add_argument("-visdom-port", type=int, default=8097)
+    parser.add_argument("-visdom", action="store_true")
 
     return parser.parse_args()
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     transforms = transforms.Compose(
         [
             d_utils.PointcloudToTensor(),
-            RandAugment3D(1, 1),
+            # RandAugment3D(1, 1),
         ]
     )
 
@@ -143,9 +143,9 @@ if __name__ == "__main__":
     model_fn = model_fn_decorator(nn.CrossEntropyLoss())
 
     if args.visdom:
-        viz = pt_utils.VisdomViz(port=args.visdom_port)
+        viz = v.VisdomViz(port=args.visdom_port)
     else:
-        viz = pt_utils.CmdLineViz()
+        viz = v.CmdLineViz()
 
     viz.text(pprint.pformat(vars(args)))
 
