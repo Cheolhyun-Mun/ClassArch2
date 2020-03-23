@@ -1,8 +1,8 @@
-git+git://github.com/erikwijmans/etw_pytorch_utils.git@v1.1.1#egg=etw_pytorch_utils
 h5py
 numpy
 pprint
 enum34
 future
 tqdm
+pytorch==0.4.1
 git+git://github.com/kim-younghan/RandAugment3D

@@ -5,23 +5,27 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
+import os, sys
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, "../../"))
 import torch
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_sched
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import etw_pytorch_utils as pt_utils
+from ClassArch2.utils import pytorch_utils as pt_utils
+from ClassArch2.utils import viz as v
 import pprint
 import os.path as osp
-import os
 import argparse
 
-from ClassArch2.models import Pointnet2ClsMSG as Pointnet
-from ClassArch2.models.pointnet2_msg_cls import model_fn_decorator
-from ClassArch2.data import ModelNet40
+from ClassArch2.models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
+from ClassArch2.models.rscnn_ssn_cls import model_fn_decorator
+from ClassArch2.data.ModelNet40Loader import ModelNet40
 import ClassArch2.data.data_utils as d_utils
-from RandAugment3D.augmentation import RandAugment3D
+from ClassArch2.RandAugment3D.augmentations import RandAugment3D
 
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = True
@@ -32,22 +36,22 @@ def parse_args():
         description="Arguments for cls training",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("-batch_size", type=int, default=16, help="Batch size")
+    parser.add_argument("-batch_size", type=int, default=32, help="Batch size")
     parser.add_argument(
-        "-num_points", type=int, default=4096, help="Number of points to train with"
+        "-num_points", type=int, default=1024, help="Number of points to train with"
     )
     parser.add_argument(
         "-weight_decay", type=float, default=1e-5, help="L2 regularization coeff"
     )
-    parser.add_argument("-lr", type=float, default=1e-2, help="Initial learning rate")
+    parser.add_argument("-lr", type=float, default=0.001, help="Initial learning rate")
     parser.add_argument(
         "-lr_decay", type=float, default=0.7, help="Learning rate decay gamma"
     )
     parser.add_argument(
-        "-decay_step", type=float, default=2e5, help="Learning rate decay step"
+        "-decay_step", type=float, default=21, help="Learning rate decay step"
     )
     parser.add_argument(
-        "-bn_momentum", type=float, default=0.5, help="Initial batch norm momentum"
+        "-bn_momentum", type=float, default=0.9, help="Initial batch norm momentum"
     )
     parser.add_argument(
         "-bnm_decay", type=float, default=0.5, help="Batch norm momentum decay gamma"
@@ -56,7 +60,7 @@ def parse_args():
         "-checkpoint", type=str, default=None, help="Checkpoint to start from"
     )
     parser.add_argument(
-        "-epochs", type=int, default=200, help="Number of epochs to train for"
+        "-epochs", type=int, default=400, help="Number of epochs to train for"
     )
     parser.add_argument(
         "-run_name",
@@ -64,14 +68,14 @@ def parse_args():
         default="cls_run_1",
         help="Name for run in tensorboard_logger",
     )
-    parser.add_argument("--visdom-port", type=int, default=8097)
-    parser.add_argument("--visdom", action="store_true")
+    parser.add_argument("-visdom_port", type=int, default=8097)
+    parser.add_argument("-visdom", action="store_true")
 
     return parser.parse_args()
 
 
-lr_clip = 1e-5
-bnm_clip = 1e-2
+lr_clip = 0.00001
+bnm_clip = 0.01
 
 if __name__ == "__main__":
     args = parse_args()
@@ -88,7 +92,7 @@ if __name__ == "__main__":
         test_set,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=2,
+        num_workers=4,
         pin_memory=True,
     )
 
@@ -97,22 +101,26 @@ if __name__ == "__main__":
         train_set,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=2,
+        num_workers=4,
         pin_memory=True,
     )
 
-    model = Pointnet(input_channels=0, num_classes=40, use_xyz=True)
+    model = RSCNN(input_channels=0, num_classes=40, use_xyz=True)
+
+    # Multi GPU
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
+    model = torch.nn.DataParallel(model, output_device=1)
     model.cuda()
     optimizer = optim.Adam(
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay
     )
     lr_lbmd = lambda it: max(
-        args.lr_decay ** (int(it * args.batch_size / args.decay_step)),
+        args.lr_decay ** (int(it // args.decay_step)),
         lr_clip / args.lr,
     )
     bn_lbmd = lambda it: max(
         args.bn_momentum
-        * args.bnm_decay ** (int(it * args.batch_size / args.decay_step)),
+        * args.bnm_decay ** (int(it // args.decay_step)),
         bnm_clip,
     )
 
@@ -139,9 +147,9 @@ if __name__ == "__main__":
     model_fn = model_fn_decorator(nn.CrossEntropyLoss())
 
     if args.visdom:
-        viz = pt_utils.VisdomViz(port=args.visdom_port)
+        viz = v.VisdomViz(port=args.visdom_port)
     else:
-        viz = pt_utils.CmdLineViz()
+        viz = v.CmdLineViz()
 
     viz.text(pprint.pformat(vars(args)))
 
@@ -152,8 +160,8 @@ if __name__ == "__main__":
         model,
         model_fn,
         optimizer,
-        checkpoint_name="checkpoints/pointnet2_stu",
-        best_name="checkpoints/pointnet2_stu_best",
+        checkpoint_name="checkpoints/rscnn_stu",
+        best_name="checkpoints/rscnn_stu_best",
         lr_scheduler=lr_scheduler,
         bnm_scheduler=bnm_scheduler,
         viz=viz,

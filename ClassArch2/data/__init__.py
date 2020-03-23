@@ -5,5 +5,4 @@ from __future__ import (
     print_function,
     unicode_literals,
 )
-from .ModelNet40Loader import ModelNet40Cls
-from .Indoor3DSemSegLoader import Indoor3DSemSeg
+from .ModelNet40Loader import ModelNet40

@@ -40,19 +40,23 @@ class ModelNet40(data.Dataset):
 
         if download and not os.path.exists(self.data_dir):
             zipfile = os.path.join(BASE_DIR, os.path.basename(self.url))
-            subprocess.check_call(
-                shlex.split("curl {} -o {}".format(self.url, zipfile))
-            )
+            # subprocess.check_call(
+            #     shlex.split("wget {} -o {}".format(self.url, zipfile))
+            # )
 
-            subprocess.check_call(
-                shlex.split("unzip {} -d {}".format(zipfile, BASE_DIR))
-            )
+            # subprocess.check_call(
+            #     shlex.split("unzip {} -d {}".format(zipfile, BASE_DIR))
+            # )
 
-            subprocess.check_call(shlex.split("rm {}".format(zipfile)))
+            # subprocess.check_call(shlex.split("rm {}".format(zipfile)))
+            os.system('wget https://shapenet.cs.stanford.edu/media/modelnet40_ply_hdf5_2048.zip')
+            print("DATA DOWNLOADED")
+            os.system('unzip modelnet40_ply_hdf5_2048.zip')
+            print("DATA UNZIPPED")
 
         self.split = split
         if self.split == 'train':
-            self.files = _get_data_files(os.path.join(self.data_dir, "train_files.txt"))
+            self.files = _get_data_files(os.path.join(self.data_dir, "train_files_student.txt"))
         elif self.split == 'test':
             self.files = _get_data_files(os.path.join(self.data_dir, "test_files.txt"))
 
@@ -61,7 +65,7 @@ class ModelNet40(data.Dataset):
             points, labels = _load_data_file(os.path.join(BASE_DIR, f))
             point_list.append(points)
             label_list.append(labels)
-
+        
         self.points = np.concatenate(point_list, 0)
         self.labels = np.concatenate(label_list, 0)
         self.set_num_points(num_points)
@@ -72,7 +76,6 @@ class ModelNet40(data.Dataset):
 
         current_points = self.points[idx, pt_idxs].copy()
         label = torch.from_numpy(self.labels[idx]).type(torch.LongTensor)
-
         if self.transforms is not None:
             current_points = self.transforms(current_points)
 
@@ -103,23 +106,20 @@ class UnlabeledModelNet40(data.Dataset):
 
         point_list = []
         for f in self.files:
-            points, _ = _load_data_file(os.path.join(root, self.files[-1]))
+            points, _ = _load_data_file(os.path.join(BASE_DIR, f))
             point_list.append(points)
 
         self.points = np.concatenate(point_list, 0)
 
     def __getitem__(self, idx):
-        pt_idxs = np.arange(0, self.points.shape[1])
+        pt_idxs = np.arange(0, min(self.points.shape[1], self.num_points))
         
         current_points = self.points[idx, pt_idxs].copy()
         
         if self.transforms is not None:
             current_points = self.transforms(current_points)
-        
-        current_points = torch.transpose(current_points, 1, 0)
-        
+
         return current_points
 
     def __len__(self):
         return self.points.shape[0]
-
