@@ -2,7 +2,7 @@
 
 * Implementation of ClassArch2 written in [PyTorch](https://pytorch.org).
 * Supports Multi-GPU via nn.DataParallel.
-* Supports PyTorch version >= 1.0.0. Use v1.0 for support of older versions of PyTorch.
+* Supports PyTorch version >= 0.4.1. Use v1.0 for support of older versions of PyTorch.
 
 ## LICENSE
 

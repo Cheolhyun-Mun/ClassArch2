@@ -56,7 +56,7 @@ class ModelNet40(data.Dataset):
 
         self.split = split
         if self.split == 'train':
-            self.files = _get_data_files(os.path.join(self.data_dir, "train_files.txt"))
+            self.files = _get_data_files(os.path.join(self.data_dir, "train_files_student.txt"))
         elif self.split == 'test':
             self.files = _get_data_files(os.path.join(self.data_dir, "test_files.txt"))
 
@@ -65,7 +65,7 @@ class ModelNet40(data.Dataset):
             points, labels = _load_data_file(os.path.join(BASE_DIR, f))
             point_list.append(points)
             label_list.append(labels)
-
+        
         self.points = np.concatenate(point_list, 0)
         self.labels = np.concatenate(label_list, 0)
         self.set_num_points(num_points)
@@ -76,7 +76,6 @@ class ModelNet40(data.Dataset):
 
         current_points = self.points[idx, pt_idxs].copy()
         label = torch.from_numpy(self.labels[idx]).type(torch.LongTensor)
-
         if self.transforms is not None:
             current_points = self.transforms(current_points)
 

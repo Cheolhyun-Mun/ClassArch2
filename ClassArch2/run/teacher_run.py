@@ -65,12 +65,12 @@ if __name__ == '__main__':
     print(f1.keys())
     
     f2 = h5py.File('../data/modelnet40_ply_hdf5_2048/ply_data_unlabeled1.h5')
-    data  = data.append(f2['data'][:])
+    data  = np.append(data, f2['data'][:], axis=0)
     print(f2.keys())
 
-    final_label = h5py.File('data/modelnet40_ply_hdf5_2048/ply_data_labeled0.h5', 'w')
+    final_label = h5py.File('../data/modelnet40_ply_hdf5_2048/ply_data_labeled0.h5', 'w')
     print(final_label)
     final_label['data'] = data
     final_label['label'] = label
 
-    copyfile('data/modelnet40_ply_hdf5_2048/ply_data_unlabeled_0_id2file.json', 'data/modelnet40_ply_hdf5_2048/ply_data_labeled_0_id2file.json')
+    copyfile('../data/modelnet40_ply_hdf5_2048/ply_data_unlabeled_0_id2file.json', '../data/modelnet40_ply_hdf5_2048/ply_data_labeled_0_id2file.json')

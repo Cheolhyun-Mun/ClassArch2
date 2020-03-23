@@ -25,7 +25,7 @@ from ClassArch2.models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
 from ClassArch2.models.rscnn_ssn_cls import model_fn_decorator
 from ClassArch2.data.ModelNet40Loader import ModelNet40
 import ClassArch2.data.data_utils as d_utils
-# from RandAugment3D.augmentation import RandAugment3D
+from ClassArch2.RandAugment3D.augmentations import RandAugment3D
 
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = True
@@ -68,7 +68,7 @@ def parse_args():
         default="cls_run_1",
         help="Name for run in tensorboard_logger",
     )
-    parser.add_argument("-visdom-port", type=int, default=8097)
+    parser.add_argument("-visdom_port", type=int, default=8097)
     parser.add_argument("-visdom", action="store_true")
 
     return parser.parse_args()
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     transforms = transforms.Compose(
         [
             d_utils.PointcloudToTensor(),
-            # RandAugment3D(1, 1),
+            RandAugment3D(1, 1),
         ]
     )
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         pin_memory=True,
     )
 
-    train_set = ModelNet40(args.num_points, transforms=transforms)
+    train_set = ModelNet40(args.num_points, transforms=transforms, split='train')
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
@@ -106,6 +106,10 @@ if __name__ == "__main__":
     )
 
     model = RSCNN(input_channels=0, num_classes=40, use_xyz=True)
+
+    # Multi GPU
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
+    model = torch.nn.DataParallel(model, output_device=1)
     model.cuda()
     optimizer = optim.Adam(
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay

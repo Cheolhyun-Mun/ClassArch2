@@ -105,7 +105,6 @@ def model_fn_decorator(criterion):
             inputs, labels = data
             inputs = inputs.to("cuda", non_blocking=True)
             labels = labels.to("cuda", non_blocking=True)
-
             preds = model(inputs)
             labels = labels.view(-1)
             loss = criterion(preds, labels)

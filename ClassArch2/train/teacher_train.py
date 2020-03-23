@@ -105,6 +105,10 @@ if __name__ == "__main__":
     )
 
     model = RSCNN(input_channels=0, num_classes=40, use_xyz=True)
+    
+    # Multi GPU
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
+    model = torch.nn.DataParallel(model, output_device=1)
     model.cuda()
     optimizer = optim.Adam(
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay
