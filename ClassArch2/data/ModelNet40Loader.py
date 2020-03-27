@@ -56,7 +56,7 @@ class ModelNet40(data.Dataset):
 
         self.split = split
         if self.split == 'train':
-            self.files = _get_data_files(os.path.join(self.data_dir, "train_files_student.txt"))
+            self.files = _get_data_files(os.path.join(self.data_dir, "train_files.txt"))
         elif self.split == 'test':
             self.files = _get_data_files(os.path.join(self.data_dir, "test_files.txt"))
 
