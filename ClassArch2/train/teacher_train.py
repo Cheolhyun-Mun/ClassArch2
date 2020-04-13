@@ -23,6 +23,7 @@ import argparse
 from ClassArch2.models.rscnn_ssn_cls import RSCNN_SSN as RSCNN
 from ClassArch2.models.rscnn_ssn_cls import model_fn_decorator
 from ClassArch2.data.ModelNet40Loader import ModelNet40
+from ClassArch2.data.ModelNet40Loader import ModelNet40Norm
 import ClassArch2.data.data_utils as d_utils
 # from RandAugment3D.augmentation import RandAugment3D
 
@@ -35,6 +36,7 @@ def parse_args():
         description="Arguments for cls training",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    parser.add_argument("-normal", type=bool, default='False', help="Choose data type")
     parser.add_argument("-batch_size", type=int, default=32, help="Batch size")
     parser.add_argument(
         "-num_points", type=int, default=1024, help="Number of points to train with"
@@ -85,30 +87,51 @@ if __name__ == "__main__":
             # RandAugment3D(1, 1),
         ]
     )
+    if args.normal:
+          assert(args.num_points<=10000)
+          test_set = ModelNet40Norm(args.num_points, transforms=transforms, split='test', normal_channel=args.normal)
+          test_loader = DataLoader(
+              test_set,
+              batch_size=args.batch_size,
+              shuffle=True,
+              num_workers=4,
+              pin_memory=True,
+          )
 
-    test_set = ModelNet40(args.num_points, transforms=transforms, split='test')
-    test_loader = DataLoader(
-        test_set,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True,
-    )
+          train_set = ModelNet40Norm(args.num_points, transforms=transforms, split='train', normal_channel=args.normal)
+          train_loader = DataLoader(
+              train_set,
+              batch_size=args.batch_size,
+              shuffle=True,
+              num_workers=4,
+              pin_memory=True,
+          )
+          
+    else:
+          assert(args.num_points<=2048)
+          test_set = ModelNet40(args.num_points, transforms=transforms, split='test')
+          test_loader = DataLoader(
+              test_set,
+              batch_size=args.batch_size,
+              shuffle=True,
+              num_workers=4,
+              pin_memory=True,
+          )
 
-    train_set = ModelNet40(args.num_points, transforms=transforms, split='train')
-    train_loader = DataLoader(
-        train_set,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True,
-    )
-
+          train_set = ModelNet40(args.num_points, transforms=transforms, split='train')
+          train_loader = DataLoader(
+              train_set,
+              batch_size=args.batch_size,
+              shuffle=True,
+              num_workers=4,
+              pin_memory=True,
+          )
+   
     model = RSCNN(input_channels=0, num_classes=40, use_xyz=True)
     
     # Multi GPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
-    model = torch.nn.DataParallel(model, output_device=1)
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
+    # model = torch.nn.DataParallel(model, output_device=0)
     model.cuda()
     optimizer = optim.Adam(
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay
